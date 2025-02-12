@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "your-ecr-repo-name/sample-app"
+        AWS_REGION = "us-west-2"
+        ECR_REPO_URI = "123456789012.dkr.ecr.${AWS_REGION}.amazonaws.com/${DOCKER_IMAGE}"
+        SONARQUBE_URL = "http://sonarqube.example.com"
+        SONARQUBE_CREDENTIALS = "sonarqube-credentials"
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                // Checkout the latest code from GitHub
+                checkout scm
+            }
+        }
+
+        stage('Code Analysis with SonarQube') {
+            steps {
+                script {
+                    // Run SonarQube analysis on the code
+                    withSonarQubeEnv('SonarQube') {
+                        sh "mvn clean verify sonar:sonar -Dsonar.projectKey=your_project_key"
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh """
+                    docker build -t ${ECR_REPO_URI}:latest .
+                    """
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                script {
+                    // Login to ECR
+                    sh """
+                    $(aws ecr get-login --no-include-email --region ${AWS_REGION})
+                    """
+                    // Push the Docker image to ECR
+                    sh """
+                    docker push ${ECR_REPO_URI}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to EKS with ArgoCD') {
+            steps {
+                script {
+                    // Trigger ArgoCD deployment (assuming you have an ArgoCD application set up)
+                    sh """
+                    kubectl apply -f deployment.yaml
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
