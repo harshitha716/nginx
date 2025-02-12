@@ -12,54 +12,52 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout the latest code from GitHub
-                checkout scm
+                git credentialsId: 'f87a34a8-0e09-45e7-b9cf-6dc68feac670', 
+                url: 'https://github.com/harshitha716/nginx',
+                branch: 'main'
             }
         }
 
-        stage('Code Analysis with SonarQube') {
-            steps {
-                script {
-                    // Run SonarQube analysis on the code
-                    withSonarQubeEnv('SonarQube') {
-                        sh "mvn clean verify sonar:sonar -Dsonar.projectKey=your_project_key"
-                    }
-                }
-            }
-        }
+        stage('Build and Test') {
+      steps {
+        sh 'ls -ltr'
+        // build the project and create a JAR file
+        sh 'cd nginx/nginx-app && mvn clean package'
+      }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    // Build the Docker image
-                    sh """
-                    docker build -t ${ECR_REPO_URI}:latest .
-                    """
-                }
-            }
+        stage('Static Code Analysis') {
+      environment {
+        SONAR_URL = "http://18.212.88.43:9000"
+      }
+      steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+          sh 'cd nginx/nginx-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
         }
+      }
+    }
 
-        stage('Push to ECR') {
-            steps {
-                script {
-                    // Login to ECR
-                    sh """
-                    $(aws ecr get-login --no-include-email --region ${AWS_REGION})
-                    """
-                    // Push the Docker image to ECR
-                    sh """
-                    docker push ${ECR_REPO_URI}:latest
-                    """
-                }
+       stage('Build and Push Docker Image') {
+        steps {
+        script {
+            sh 'cd nginx/nginx-app && docker build -t ${DOCKER_IMAGE} .'
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 200901485389.dkr.ecr.us-east-1.amazonaws.com
+            docker tag harshitha-ecr:latest 200901485389.dkr.ecr.us-east-1.amazonaws.com/harshitha-ecr:latest
+            docker push 200901485389.dkr.ecr.us-east-1.amazonaws.com/harshitha-ecr:latest
             }
         }
+      }
+    }
+
 
         stage('Deploy to EKS with ArgoCD') {
             steps {
                 script {
                     // Trigger ArgoCD deployment (assuming you have an ArgoCD application set up)
                     sh """
-                    kubectl apply -f deployment.yaml
+                     kubectl apply -f deployment.yaml 
+                     kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG 
+                     kubectl rollout status deployment/$DEPLOYMENT_NAME 
+
                     """
                 }
             }
