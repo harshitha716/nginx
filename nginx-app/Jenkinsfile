@@ -12,7 +12,7 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = 'WX5+6wyw+rEuMWiCNCzmNpOgnz4mRH6AyQz4+FJi'
         AWS_DEFAULT_REGION = 'us-east-2'
         ARGOCD_SERVER = 'https://localhost:8080'
-        ARGOCD_APP_NAME = 'cicd.com'
+        ARGOCD_APP_NAME = 'test'
         DEPLOYMENT_NAME = 'my-app'
         CONTAINER_NAME = 'my-app'
         IMAGE_TAG = "${GIT_COMMIT}" 
