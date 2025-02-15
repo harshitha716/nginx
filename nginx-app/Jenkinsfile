@@ -18,6 +18,24 @@ pipeline {
     }
 
     stages {
+        stage('Install kubectl') {
+            steps {
+                script {
+                    // Install kubectl if not already installed
+                    sh '''
+                    if ! command -v kubectl &> /dev/null; then
+                        echo "kubectl not found, installing..."
+                        curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
+                        chmod +x ./kubectl
+                        sudo mv ./kubectl /usr/local/bin/kubectl
+                    else
+                        echo "kubectl already installed"
+                    fi
+                    '''
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 checkout([$class: 'GitSCM', 
