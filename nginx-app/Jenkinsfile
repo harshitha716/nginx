@@ -39,11 +39,21 @@ pipeline {
             }
         }
 
-        stage('Update Argo CD Application') {
-            steps {
-                script {
-                    // Trigger Argo CD to sync the application with the new image
-                    sh 'kubectl set image deployment/my-app my-app=${DOCKER_IMAGE}'
+        stage('Update Deployment File') {
+        environment {
+            GIT_REPO_NAME = "nginx"
+            GIT_USER_NAME = "harshitha716"
+        }
+        steps {
+            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                sh '''
+                    git config user.email "harshithapendiyala0812@gmail.com"
+                    git config user.name "harshitha716"
+                    BUILD_NUMBER=${BUILD_NUMBER}
+                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" nginx-app/deployment.yml
+                    git add nginx-app/deployment.yml
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
                     sh 'kubectl rollout restart deployment my-app'
                 }
             }
