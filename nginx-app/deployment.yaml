@@ -12,8 +12,10 @@ spec:
       labels:
         app: my-app
     spec:
+      imagePullSecrets:
+        - name: ecr-secert
       containers:
         - name: my-app
-          image: "200901485389.dkr.ecr.us-east-1.amazonaws.com/harshitha-ecr:latest"
+          image: "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest"
           ports:
             - containerPort: 8080
