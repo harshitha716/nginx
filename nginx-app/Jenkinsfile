@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "sample-app"
+        DOCKER_IMAGE = "${ECR_REPO_URI}:${IMAGE_TAG}"
         AWS_REGION = "us-east-2"
         ECR_REPO_URI = "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha"
         GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
@@ -34,8 +34,8 @@ pipeline {
                     // Use the correct path now
                     sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
                     sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
-                    sh 'docker tag sample-app:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:IMAGE_TAG'
-                    sh 'docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:IMAGE_TAG'
+                    #sh 'docker tag sample-app:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:IMAGE_TAG'
+                    sh 'docker push ${DOCKER_IMAGE}'
                 }
             }
         }
