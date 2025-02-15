@@ -34,7 +34,7 @@ pipeline {
                     // Use the correct path now
                     sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
                     sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
-                    sh 'docker tag harshitha:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest'
+                    sh 'docker tag sample-app:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest'
                     sh 'docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest'
                 }
             }
