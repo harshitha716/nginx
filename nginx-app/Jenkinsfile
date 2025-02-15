@@ -55,7 +55,7 @@ pipeline {
             steps {
                 script {
                     // Commit the updated deployment.yaml back to the Git repository
-                    withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                    withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh """
                             git config --global user.name "harshitha716"
                             git config --global user.email "harshithapendiyala0812@gmail.com"
