@@ -44,6 +44,7 @@ pipeline {
                 script {
                     // Trigger ArgoCD deployment (assuming you have an ArgoCD application set up)
                     sh """
+                    aws eks --region us-east-2 update-kubeconfig --name CI-CD
                     kubectl apply -f deployment.yaml 
                     kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=$ECR_REPO_URI/$DOCKER_IMAGE:latest 
                     kubectl rollout status deployment/$DEPLOYMENT_NAME 
