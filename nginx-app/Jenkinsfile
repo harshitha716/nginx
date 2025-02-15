@@ -2,11 +2,22 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "your-ecr-repo-name/sample-app"
+        DOCKER_IMAGE = "sample-app"
         AWS_REGION = "us-west-2"
-        ECR_REPO_URI = "123456789012.dkr.ecr.${AWS_REGION}.amazonaws.com/${DOCKER_IMAGE}"
-        SONARQUBE_URL = "http://sonarqube.example.com"
-        SONARQUBE_CREDENTIALS = "sonarqube-credentials"
+        ECR_REPO_URI = "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha"
+        SONARQUBE_URL = "http://3.139.76.221:9000"
+        GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
+        GIT_BRANCH = 'main' // Set the branch you want to deploy from
+        MAVEN_HOME = tool name: 'Maven 3', type: 'Tool' // Make sure Maven is configured in Jenkins
+        SONARQUBE_SERVER = 'SonarQube' // This should be your SonarQube server name
+        ECR_REGION = 'us-west-2' // Replace with your AWS region
+        AWS_ACCESS_KEY_ID =  'AKIA4IM3HJ4JRD3KTLLL'
+        AWS_SECRET_ACCESS_KEY = 'WX5+6wyw+rEuMWiCNCzmNpOgnz4mRH6AyQz4+FJi'
+        AWS_DEFAULT_REGION = 'us-west-2'
+        ARGOCD_SERVER = 'https://localhost:8080
+        ARGOCD_APP_NAME = 'your-application-name'
+    }
+
     }
 
     stages {
