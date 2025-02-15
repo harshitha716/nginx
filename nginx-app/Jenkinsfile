@@ -3,18 +3,15 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "sample-app"
-        AWS_REGION = "us-west-2"
+        AWS_REGION = "us-east-2"
         ECR_REPO_URI = "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha"
-        SONARQUBE_URL = "http://3.139.76.221:9000"
         GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
         GIT_BRANCH = 'main' // Set the branch you want to deploy from
-        MAVEN_HOME = tool name: 'Maven 3', type: 'Tool' // Make sure Maven is configured in Jenkins
-        SONARQUBE_SERVER = 'SonarQube' // This should be your SonarQube server name
-        ECR_REGION = 'us-west-2' // Replace with your AWS region
+        ECR_REGION = 'us-east-2' // Replace with your AWS region
         AWS_ACCESS_KEY_ID =  'AKIA4IM3HJ4JRD3KTLLL'
         AWS_SECRET_ACCESS_KEY = 'WX5+6wyw+rEuMWiCNCzmNpOgnz4mRH6AyQz4+FJi'
-        AWS_DEFAULT_REGION = 'us-west-2'
-        ARGOCD_SERVER = 'https://localhost:8080
+        AWS_DEFAULT_REGION = 'us-east-2'
+        ARGOCD_SERVER = 'https://localhost:8080'
         ARGOCD_APP_NAME = 'your-application-name'
     }
 
@@ -23,37 +20,17 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git credentialsId: 'f87a34a8-0e09-45e7-b9cf-6dc68feac670', 
                 url: 'https://github.com/harshitha716/nginx',
                 branch: 'main'
             }
         }
-
-        stage('Build and Test') {
-      steps {
-        sh 'ls -ltr'
-        // build the project and create a JAR file
-        sh 'cd nginx/nginx-app && mvn clean package'
-      }
-
-        stage('Static Code Analysis') {
-      environment {
-        SONAR_URL = "http://18.212.88.43:9000"
-      }
-      steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh 'cd nginx/nginx-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
-        }
-      }
-    }
-
        stage('Build and Push Docker Image') {
         steps {
         script {
             sh 'cd nginx/nginx-app && docker build -t ${DOCKER_IMAGE} .'
-            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 200901485389.dkr.ecr.us-east-1.amazonaws.com
-            docker tag harshitha-ecr:latest 200901485389.dkr.ecr.us-east-1.amazonaws.com/harshitha-ecr:latest
-            docker push 200901485389.dkr.ecr.us-east-1.amazonaws.com/harshitha-ecr:latest
+            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 842675998483.dkr.ecr.us-east-2.amazonaws.com
+            docker tag harshitha:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest
+            docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest
             }
         }
       }
