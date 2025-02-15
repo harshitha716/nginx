@@ -13,8 +13,8 @@ pipeline {
         AWS_DEFAULT_REGION = 'us-east-2'
         ARGOCD_SERVER = 'https://localhost:8080'
         ARGOCD_APP_NAME = 'your-application-name'
-        DEPLOYMENT_NAME = 'app'
-        CONTAINER_NAME = 'nginx'
+        DEPLOYMENT_NAME = 'my-app'
+        CONTAINER_NAME = 'my-app'
     }
 
     stages {
