@@ -31,8 +31,8 @@ pipeline {
                     // Debugging the workspace to see the structure
                     sh 'ls -R'  // This will list all files recursively
 
-                    // Assuming the directory should exist, this is where your issue occurs
-                    sh 'cd nginx/nginx-app && docker build -t ${DOCKER_IMAGE} .'
+                    // Use the correct path now
+                    sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
                     sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
                     sh 'docker tag ${DOCKER_IMAGE}:latest ${ECR_REPO_URI}:${DOCKER_IMAGE}:latest'
                     sh 'docker push ${ECR_REPO_URI}:${DOCKER_IMAGE}:latest'
