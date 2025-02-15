@@ -8,7 +8,7 @@ pipeline {
         GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
         GIT_BRANCH = 'main' // Set the branch you want to deploy from
         ECR_REGION = 'us-east-2' // Replace with your AWS region
-        AWS_ACCESS_KEY_ID =  'AKIA4IM3HJ4JRD3KTLLL'
+        AWS_ACCESS_KEY_ID = 'AKIA4IM3HJ4JRD3KTLLL'
         AWS_SECRET_ACCESS_KEY = 'WX5+6wyw+rEuMWiCNCzmNpOgnz4mRH6AyQz4+FJi'
         AWS_DEFAULT_REGION = 'us-east-2'
         ARGOCD_SERVER = 'https://localhost:8080'
@@ -32,13 +32,14 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // Use the correct path now
+                    // Build and push the Docker image
                     sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
                     sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
                     sh 'docker push ${DOCKER_IMAGE}'
                 }
             }
         }
+
         stage('Update deployment.yaml with new image') {
             steps {
                 script {
@@ -59,13 +60,13 @@ pipeline {
                         git config --global user.email "harshithapendiyala0812@gmail.com"
                         git add ${DEPLOYMENT_YAML_PATH}
                         git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
-                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH}  // Push changes to the correct branch
+                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH} // Push changes to the correct branch
                     """
                 }
             }
         }
+    }
 
-                   
     post {
         always {
             cleanWs()
