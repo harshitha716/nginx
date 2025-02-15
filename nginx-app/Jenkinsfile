@@ -15,37 +15,36 @@ pipeline {
         ARGOCD_APP_NAME = 'your-application-name'
     }
 
-    }
-
     stages {
         stage('Checkout Code') {
             steps {
-                url: 'https://github.com/harshitha716/nginx',
-                branch: 'main'
+                // Correct git checkout syntax
+                checkout([$class: 'GitSCM', 
+                    branches: [[name: "*/${GIT_BRANCH}"]], 
+                    userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
+                ])
             }
         }
-       stage('Build and Push Docker Image') {
-        steps {
-        script {
-            sh 'cd nginx/nginx-app && docker build -t ${DOCKER_IMAGE} .'
-            aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 842675998483.dkr.ecr.us-east-2.amazonaws.com
-            docker tag harshitha:latest 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest
-            docker push 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:latest
+        
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    sh 'cd nginx/nginx-app && docker build -t ${DOCKER_IMAGE} .'
+                    sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
+                    sh 'docker tag ${DOCKER_IMAGE}:latest ${ECR_REPO_URI}:${DOCKER_IMAGE}:latest'
+                    sh 'docker push ${ECR_REPO_URI}:${DOCKER_IMAGE}:latest'
+                }
             }
         }
-      }
-    }
-
 
         stage('Deploy to EKS with ArgoCD') {
             steps {
                 script {
                     // Trigger ArgoCD deployment (assuming you have an ArgoCD application set up)
                     sh """
-                     kubectl apply -f deployment.yaml 
-                     kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG 
-                     kubectl rollout status deployment/$DEPLOYMENT_NAME 
-
+                    kubectl apply -f deployment.yaml 
+                    kubectl set image deployment/$DEPLOYMENT_NAME $CONTAINER_NAME=$ECR_REPO_URI/$DOCKER_IMAGE:latest 
+                    kubectl rollout status deployment/$DEPLOYMENT_NAME 
                     """
                 }
             }
