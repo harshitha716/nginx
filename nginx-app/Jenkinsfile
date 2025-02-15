@@ -16,6 +16,7 @@ pipeline {
         DEPLOYMENT_NAME = 'my-app'
         CONTAINER_NAME = 'my-app'
         IMAGE_TAG = "${GIT_COMMIT}" 
+        DEPLOYMENT_YAML_PATH = 'nginx-app/deployment.yaml'
     }
 
     stages {
@@ -38,28 +39,33 @@ pipeline {
                 }
             }
         }
-
-        stage('Update Deployment File') {
-        environment {
-            GIT_REPO_NAME = "nginx"
-            GIT_USER_NAME = "harshitha716"
-        }
-        steps {
-            withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                sh '''
-                    git config user.email "harshithapendiyala0812@gmail.com"
-                    git config user.name "harshitha716"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" nginx-app/deployment.yml
-                    git add nginx-app/deployment.yml
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                    sh 'kubectl rollout restart deployment my-app'
+        stage('Update deployment.yaml with new image') {
+            steps {
+                script {
+                    // Update the image in the deployment.yaml with the new tag
+                    sh """
+                        sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
+                    """
                 }
             }
         }
-    }
 
+        stage('Commit Updated deployment.yaml') {
+            steps {
+                script {
+                    // Commit the updated deployment.yaml back to the Git repository
+                    sh """
+                        git config --global user.name "harshitha716"
+                        git config --global user.email "harshithapendiyala0812@gmail.com"
+                        git add ${DEPLOYMENT_YAML_PATH}
+                        git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
+                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH}  // Push changes to the correct branch
+                    """
+                }
+            }
+        }
+
+                   
     post {
         always {
             cleanWs()
