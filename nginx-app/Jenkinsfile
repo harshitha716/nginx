@@ -17,29 +17,6 @@ pipeline {
         CONTAINER_NAME = 'my-app'
     }
 
-    stages {
-        stage('Install kubectl') {
-            steps {
-                script {
-                    // Install kubectl if not already installed
-                    sh '''
-                    if ! command -v kubectl &> /dev/null; then
-                        echo "kubectl not found, installing..."
-                        curl -LO "https://dl.k8s.io/release/v1.26.0/bin/linux/amd64/kubectl"
-                        chmod +x ./kubectl
-                        mv ./kubectl $HOME/.local/bin/kubectl
-                    else
-                        echo "kubectl already installed"
-                    fi
-                    '''
-
-                    // Update PATH to include the directory where kubectl was installed
-                    sh 'echo "$HOME/.local/bin" >> ~/.bashrc'
-                    sh 'source ~/.bashrc'
-                }
-            }
-        }
-
         stage('Checkout Code') {
             steps {
                 checkout([$class: 'GitSCM', 
