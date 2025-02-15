@@ -17,6 +17,7 @@ pipeline {
         CONTAINER_NAME = 'my-app'
     }
 
+    stages {
         stage('Checkout Code') {
             steps {
                 checkout([$class: 'GitSCM', 
