@@ -60,7 +60,7 @@ pipeline {
                         git config --global user.email "harshithapendiyala0812@gmail.com"
                         git add ${DEPLOYMENT_YAML_PATH}
                         git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
-                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH} // Push changes to the correct branch
+                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH} 
                     """
                 }
             }
