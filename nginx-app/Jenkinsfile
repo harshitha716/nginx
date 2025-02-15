@@ -43,7 +43,8 @@ pipeline {
             steps {
                 script {
                     // Trigger Argo CD to sync the application with the new image
-                    sh "kubectl rollout restart deployment my-app --image=${DOCKER_IMAGE}"
+                    sh 'kubectl set image deployment/my-app my-app=${DOCKER_IMAGE}'
+                    sh 'kubectl rollout restart deployment my-app'
                 }
             }
         }
