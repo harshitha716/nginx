@@ -55,13 +55,15 @@ pipeline {
             steps {
                 script {
                     // Commit the updated deployment.yaml back to the Git repository
-                    sh """
-                        git config --global user.name "harshitha716"
-                        git config --global user.email "harshithapendiyala0812@gmail.com"
-                        git add ${DEPLOYMENT_YAML_PATH}
-                        git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
-                        git push ${GIT_REPO_URL} HEAD:${GIT_BRANCH} 
-                    """
+                    withCredentials([usernamePassword(credentialsId: 'github-credentials', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh """
+                            git config --global user.name "harshitha716"
+                            git config --global user.email "harshithapendiyala0812@gmail.com"
+                            git add ${DEPLOYMENT_YAML_PATH}
+                            git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
+                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:${GIT_BRANCH}
+                        """
+                    }
                 }
             }
         }
