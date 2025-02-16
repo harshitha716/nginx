@@ -62,6 +62,8 @@ pipeline {
                     sh """
                         sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
                     """
+                    // Debug: Show the contents of the deployment.yaml after modification
+                    sh "cat ${DEPLOYMENT_YAML_PATH}"
                 }
             }
         }
