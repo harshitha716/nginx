@@ -74,9 +74,13 @@ pipeline {
                             git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
+                                
+                                # Create a separate branch for Jenkins commits to avoid triggering the webhook
+                                git checkout -b jenkins-updates
+
                                 git add ${DEPLOYMENT_YAML_PATH}
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:${GIT_BRANCH}
+                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
                             )
                         '''
                     }
