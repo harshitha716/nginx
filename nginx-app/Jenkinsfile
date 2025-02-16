@@ -6,8 +6,8 @@ pipeline {
         AWS_REGION = "us-east-2"
         ECR_REPO_URI = "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha"
         GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
-        GIT_BRANCH = 'main' // Set the branch you want to deploy from
-        ECR_REGION = 'us-east-2' // Replace with your AWS region
+        GIT_BRANCH = 'main'
+        ECR_REGION = 'us-east-2'
         AWS_ACCESS_KEY_ID = 'AKIA4IM3HJ4JRD3KTLLL'
         AWS_SECRET_ACCESS_KEY = 'WX5+6wyw+rEuMWiCNCzmNpOgnz4mRH6AyQz4+FJi'
         AWS_DEFAULT_REGION = 'us-east-2'
@@ -15,11 +15,28 @@ pipeline {
         ARGOCD_APP_NAME = 'test'
         DEPLOYMENT_NAME = 'my-app'
         CONTAINER_NAME = 'my-app'
-        IMAGE_TAG = "${GIT_COMMIT}" 
+        IMAGE_TAG = "${GIT_COMMIT}"
         DEPLOYMENT_YAML_PATH = 'nginx-app/deployment.yaml'
     }
 
     stages {
+        stage('Check Commit Message') {
+            steps {
+                script {
+                    // Get the last commit message
+                    def commitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    echo "Commit Message: ${commitMessage}"
+
+                    // Exit early if the commit message contains the ignore pattern
+                    if (commitMessage.contains("[Jenkins update: Don't trigger webhook]")) {
+                        echo "Commit message contains the Jenkins update pattern. Skipping pipeline."
+                        currentBuild.result = 'SUCCESS'  // Mark the build as successful without executing further
+                        return  // Exit the pipeline
+                    }
+                }
+            }
+        }
+
         stage('Checkout Code') {
             steps {
                 checkout([$class: 'GitSCM', 
@@ -32,7 +49,6 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    // Build and push the Docker image
                     sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
                     sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
                     sh 'docker push ${DOCKER_IMAGE}'
@@ -43,7 +59,6 @@ pipeline {
         stage('Update deployment.yaml with new image') {
             steps {
                 script {
-                    // Update the image in the deployment.yaml with the new tag
                     sh """
                         sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
                     """
@@ -54,32 +69,27 @@ pipeline {
         stage('Commit Updated deployment.yaml') {
             steps {
                 script {
-                    // Commit the updated deployment.yaml back to the Git repository
-                    withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        sh """
+                    sh '''
+                        git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
                             git config --global user.name "harshitha716"
                             git config --global user.email "harshithapendiyala0812@gmail.com"
                             git add ${DEPLOYMENT_YAML_PATH}
-                            git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE}"
+                            git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
                             git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:${GIT_BRANCH}
-                        """
-                    }
+                        )
+                    '''
                 }
             }
         }
 
-       stage('Trigger ArgoCD Sync') {
-    steps {
-        script {
-            // Trigger ArgoCD sync to deploy the updated application to EKS
-            withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
-                sh """
-                    # Login to ArgoCD securely
-                    argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
-                    
-                    # Sync the application to deploy the latest changes
-                    argocd app sync ${ARGOCD_APP_NAME}
-                """
+        stage('Trigger ArgoCD Sync') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
+                        sh """
+                            argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
+                            argocd app sync ${ARGOCD_APP_NAME}
+                        """
                     }
                 }
             }
@@ -92,5 +102,3 @@ pipeline {
         }
     }
 }
-
-
