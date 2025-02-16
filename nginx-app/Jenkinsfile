@@ -59,9 +59,18 @@ pipeline {
         stage('Update deployment.yaml with new image') {
             steps {
                 script {
+                    // Debug: Print the contents of the deployment.yaml before modification
+                    echo "Before modification, contents of deployment.yaml:"
+                    sh "cat ${DEPLOYMENT_YAML_PATH}"
+
+                    // Apply the sed command to update the image tag in deployment.yaml
                     sh """
                         sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
                     """
+
+                    // Debug: Print the contents of the deployment.yaml after modification
+                    echo "After modification, contents of deployment.yaml:"
+                    sh "cat ${DEPLOYMENT_YAML_PATH}"
                 }
             }
         }
@@ -71,17 +80,27 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh '''
-                            git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
+                            # Stage the changes to deployment.yaml
+                            git add ${DEPLOYMENT_YAML_PATH}
+
+                            # Check if there are any changes to commit
+                            git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
+                                echo "Changes detected, committing deployment.yaml..."
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
-                                
-                                # Create a separate branch for Jenkins commits to avoid triggering the webhook
-                                git checkout -b jenkins-updates
 
-                                git add ${DEPLOYMENT_YAML_PATH}
+                                # Commit the changes directly on the jenkins-updates branch
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
                             )
+
+                            # Ensure we're on the correct branch
+                            git checkout jenkins-updates
+
+                            # Pull the latest changes from the remote jenkins-updates branch
+                            git pull origin jenkins-updates --no-rebase
+
+                            # Push the changes to the remote jenkins-updates branch
+                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
                         '''
                     }
                 }
