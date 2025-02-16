@@ -75,9 +75,13 @@ pipeline {
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
                                 
-                                # Create a separate branch for Jenkins commits to avoid triggering the webhook
-                                git checkout -b jenkins-updates
+                                # Checkout the remote jenkins-updates branch or create a new one if it doesn't exist
+                                git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
+                                
+                                # Pull the latest changes from the remote jenkins-updates branch
+                                git pull origin jenkins-updates
 
+                                # Stage, commit, and push changes
                                 git add ${DEPLOYMENT_YAML_PATH}
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
                                 git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
