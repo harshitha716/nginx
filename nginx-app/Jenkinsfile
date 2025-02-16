@@ -75,16 +75,25 @@ pipeline {
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
                                 
-                                # Checkout the remote jenkins-updates branch or create it if it doesn't exist
+                                # Commit local changes to deployment.yaml if there are any
+                                if git diff --quiet ${DEPLOYMENT_YAML_PATH}; then
+                                    echo "No local changes to commit"
+                                else
+                                    echo "Committing local changes to deployment.yaml"
+                                    git add ${DEPLOYMENT_YAML_PATH}
+                                    git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
+                                fi
+                                
+                                # Checkout the remote jenkins-updates branch
                                 git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
                                 
-                                # Checkout the jenkins-updates branch (if in detached HEAD state)
+                                # Ensure we're on the jenkins-updates branch (this avoids the "detached HEAD" state)
                                 git checkout jenkins-updates
 
-                                # Merge the latest changes from the remote jenkins-updates branch
+                                # Pull the latest changes from the remote jenkins-updates branch
                                 git pull origin jenkins-updates --no-rebase
 
-                                # Stage and commit if there are changes
+                                # Stage and commit the updated deployment.yaml
                                 git add ${DEPLOYMENT_YAML_PATH}
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
 
