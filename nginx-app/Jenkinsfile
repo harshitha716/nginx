@@ -11,7 +11,7 @@ pipeline {
         AWS_ACCESS_KEY_ID = 'AKIA4IM3HJ4JRD3KTLLL'
         AWS_SECRET_ACCESS_KEY = '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'
         AWS_DEFAULT_REGION = 'us-east-2'
-        ARGOCD_SERVER = 'https://localhost:8080'
+        ARGOCD_SERVER = 'localhost:8080'
         ARGOCD_APP_NAME = 'test'
         DEPLOYMENT_NAME = 'my-app'
         CONTAINER_NAME = 'my-app'
@@ -68,18 +68,18 @@ pipeline {
             }
         }
 
-        stage('Trigger ArgoCD Sync') {
-            steps {
-                script {
-                    // Trigger ArgoCD sync to deploy the updated application to EKS
-                    withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
-                        sh """
-                            # Login to ArgoCD
-                            argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
-                            
-                            # Sync the application to deploy the latest changes
-                            argocd app sync ${ARGOCD_APP_NAME}
-                        """
+       stage('Trigger ArgoCD Sync') {
+    steps {
+        script {
+            // Trigger ArgoCD sync to deploy the updated application to EKS
+            withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
+                sh """
+                    # Login to ArgoCD securely
+                    argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
+                    
+                    # Sync the application to deploy the latest changes
+                    argocd app sync ${ARGOCD_APP_NAME}
+                """
                     }
                 }
             }
