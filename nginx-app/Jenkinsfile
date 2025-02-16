@@ -69,11 +69,27 @@ pipeline {
         }
     }
 
+    stage('Trigger ArgoCD Sync') {
+            steps {
+                script {
+                    // Trigger ArgoCD sync to deploy the updated application to EKS
+                    withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
+                        sh """
+                            # Login to ArgoCD
+                            argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
+                            
+                            # Sync the application to deploy the latest changes
+                            argocd app sync ${ARGOCD_APP_NAME}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
     post {
         always {
             cleanWs()
         }
     }
 }
-
-
