@@ -1,127 +1,22 @@
-pipeline {
-    agent any
-
-    environment {
-        DOCKER_IMAGE = "${ECR_REPO_URI}:${IMAGE_TAG}"
-        AWS_REGION = "us-east-2"
-        ECR_REPO_URI = "842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha"
-        GIT_REPO_URL = 'https://github.com/harshitha716/nginx.git'
-        GIT_BRANCH = 'jenkins-updates'
-        ECR_REGION = 'us-east-2'
-        AWS_ACCESS_KEY_ID = 'AKIA4IM3HJ4JRD3KTLLL'
-        AWS_SECRET_ACCESS_KEY = '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'
-        AWS_DEFAULT_REGION = 'us-east-2'
-        ARGOCD_SERVER = 'localhost:8080'
-        ARGOCD_APP_NAME = 'test'
-        DEPLOYMENT_YAML_PATH = 'nginx-app/deployment.yaml'
-        IMAGE_TAG = "${GIT_COMMIT}"
-    }
-
-    stages {
-        stage('Check Commit Message') {
-            steps {
-                script {
-                    // Get the last commit message
-                    def commitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    echo "Commit Message: ${commitMessage}"
-
-                    // Exit early if the commit message contains the ignore pattern
-                    if (commitMessage.contains("[Jenkins update: Don't trigger webhook]")) {
-                        echo "Commit message contains the Jenkins update pattern. Skipping pipeline."
-                        currentBuild.result = 'SUCCESS'  // Mark the build as successful without executing further
-                        return  // Exit the pipeline
-                    }
-                }
-            }
-        }
-
-        stage('Checkout Code') {
-            steps {
-                checkout([$class: 'GitSCM', 
-                    branches: [[name: "*/${GIT_BRANCH}"]], 
-                    userRemoteConfigs: [[url: "${GIT_REPO_URL}"]]
-                ])
-            }
-        }
-
-        stage('Build and Push Docker Image') {
-            steps {
-                script {
-                    sh 'cd nginx-app && docker build -t ${DOCKER_IMAGE} .'
-                    sh 'aws ecr get-login-password --region ${ECR_REGION} | docker login --username AWS --password-stdin ${ECR_REPO_URI}'
-                    sh 'docker push ${DOCKER_IMAGE}'
-                }
-            }
-        }
-
-        stage('Update deployment.yaml with new image') {
-            steps {
-                script {
-                    // Debug: Print the contents of the deployment.yaml before modification
-                    echo "Before modification, contents of deployment.yaml:"
-                    sh "cat ${DEPLOYMENT_YAML_PATH}"
-
-                    // Apply the sed command to update the image tag in deployment.yaml
-                    sh """
-                        sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
-                    """
-
-                    // Debug: Print the contents of the deployment.yaml after modification
-                    echo "After modification, contents of deployment.yaml:"
-                    sh "cat ${DEPLOYMENT_YAML_PATH}"
-                }
-            }
-        }
-
-        stage('Commit Updated deployment.yaml') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                        sh '''
-                            # Stage the changes to deployment.yaml
-                            git add ${DEPLOYMENT_YAML_PATH}
-
-                            # Check if there are any changes to commit
-                            git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
-                                echo "Changes detected, committing deployment.yaml..."
-                                git config --global user.name "harshitha716"
-                                git config --global user.email "harshithapendiyala0812@gmail.com"
-
-                                # Commit the changes directly on the jenkins-updates branch
-                                git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-                            )
-
-                            # Ensure we are on the correct branch (jenkins-updates)
-                            git checkout jenkins-updates
-
-                            # Pull the latest changes from the remote jenkins-updates branch
-                            git pull origin jenkins-updates --no-rebase
-
-                            # Push the changes to the remote jenkins-updates branch
-                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git jenkins-updates
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Trigger ArgoCD Sync') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
-                        sh """
-                            argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
-                            argocd app sync ${ARGOCD_APP_NAME}
-                        """
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        always {
-            cleanWs()  // Clean workspace after build
-        }
-    }
-}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      imagePullSecrets:
+        - name: ecr-secert
+      containers:
+        - name: my-app
+          image: 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:7a6240e5fc75d482c7a85d539b209d3ec2896f27
+          ports:
+            - containerPort: 8080
+            
