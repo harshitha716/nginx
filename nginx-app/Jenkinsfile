@@ -82,19 +82,18 @@ pipeline {
                         sh '''
                             # Stage the changes to deployment.yaml
                             git add ${DEPLOYMENT_YAML_PATH}
-                            
+
                             # Check if there are any changes to commit
                             git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
                                 echo "Changes detected, committing deployment.yaml..."
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
 
-                                # Commit the changes
+                                # Commit the changes directly on the jenkins-updates branch
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
                             )
 
                             # Ensure we're on the correct branch
-                            git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
                             git checkout jenkins-updates
 
                             # Pull the latest changes from the remote jenkins-updates branch
