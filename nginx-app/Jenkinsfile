@@ -59,11 +59,17 @@ pipeline {
         stage('Update deployment.yaml with new image') {
             steps {
                 script {
-                    echo "Modifying deployment.yaml with new Docker image..."
+                    // Debug: Print the contents of the deployment.yaml before modification
+                    echo "Before modification, contents of deployment.yaml:"
+                    sh "cat ${DEPLOYMENT_YAML_PATH}"
+
+                    // Apply the sed command to update the image tag in deployment.yaml
                     sh """
                         sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
                     """
-                    // Debug: Show the contents of the deployment.yaml after modification
+
+                    // Debug: Print the contents of the deployment.yaml after modification
+                    echo "After modification, contents of deployment.yaml:"
                     sh "cat ${DEPLOYMENT_YAML_PATH}"
                 }
             }
@@ -74,10 +80,10 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh '''
-                            # Ensure the changes are staged for commit
+                            # Stage the changes to deployment.yaml
                             git add ${DEPLOYMENT_YAML_PATH}
                             
-                            # Check if there are changes to commit
+                            # Check if there are any changes to commit
                             git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
                                 echo "Changes detected, committing deployment.yaml..."
                                 git config --global user.name "harshitha716"
@@ -122,5 +128,3 @@ pipeline {
         }
     }
 }
-
-
