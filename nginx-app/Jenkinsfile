@@ -75,13 +75,22 @@ pipeline {
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
                                 
-                                # Checkout the remote jenkins-updates branch or create a new one if it doesn't exist
+                                # Check if there are local changes
+                                if git diff --quiet ${DEPLOYMENT_YAML_PATH}; then
+                                    echo "No local changes to commit"
+                                else
+                                    echo "Committing local changes to deployment.yaml"
+                                    git add ${DEPLOYMENT_YAML_PATH}
+                                    git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
+                                fi
+                                
+                                # Fetch the latest changes from the remote jenkins-updates branch
                                 git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
                                 
                                 # Merge the latest changes from the remote jenkins-updates branch
                                 git pull origin jenkins-updates --no-rebase
 
-                                # Stage, commit, and push changes
+                                # Stage and commit if there are changes
                                 git add ${DEPLOYMENT_YAML_PATH}
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
                                 git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
