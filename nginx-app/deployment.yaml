@@ -19,3 +19,4 @@ spec:
           image: 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:45309ed1197afd06eb884b981bfff375d2e089ca
           ports:
             - containerPort: 8080
+            
