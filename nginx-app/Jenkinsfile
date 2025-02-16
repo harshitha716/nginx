@@ -102,19 +102,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Trigger ArgoCD Sync') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: 'argocd', usernameVariable: 'ARGOCD_USER', passwordVariable: 'ARGOCD_PASS')]) {
-                        sh """
-                            argocd login ${ARGOCD_SERVER} --username ${ARGOCD_USER} --password ${ARGOCD_PASS} --insecure
-                            argocd app sync ${ARGOCD_APP_NAME}
-                        """
-                    }
-                }
-            }
-        }
     }
 
     post {
@@ -123,7 +110,3 @@ pipeline {
         }
     }
 }
-
-
-
-
