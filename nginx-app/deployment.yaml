@@ -16,6 +16,6 @@ spec:
         - name: ecr-secert
       containers:
         - name: my-app
-          image: 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:d654786f43a805dbc06effb0345cfd9a4625c81f
+          image: 842675998483.dkr.ecr.us-east-2.amazonaws.com/harshitha:155c2cfb87f2a119bb62e7485f9ba3d3409d21ce
           ports:
             - containerPort: 8080
