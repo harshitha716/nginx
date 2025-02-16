@@ -59,6 +59,7 @@ pipeline {
         stage('Update deployment.yaml with new image') {
             steps {
                 script {
+                    echo "Modifying deployment.yaml with new Docker image..."
                     sh """
                         sed -i 's|image: .*|image: ${DOCKER_IMAGE}|' ${DEPLOYMENT_YAML_PATH}
                     """
@@ -73,35 +74,28 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh '''
-                            git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
+                            # Ensure the changes are staged for commit
+                            git add ${DEPLOYMENT_YAML_PATH}
+                            
+                            # Check if there are changes to commit
+                            git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
+                                echo "Changes detected, committing deployment.yaml..."
                                 git config --global user.name "harshitha716"
                                 git config --global user.email "harshithapendiyala0812@gmail.com"
-                                
-                                # Commit local changes to deployment.yaml if there are any
-                                if git diff --quiet ${DEPLOYMENT_YAML_PATH}; then
-                                    echo "No local changes to commit"
-                                else
-                                    echo "Committing local changes to deployment.yaml"
-                                    git add ${DEPLOYMENT_YAML_PATH}
-                                    git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-                                fi
-                                
-                                # Checkout the remote jenkins-updates branch
-                                git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
-                                
-                                # Ensure we're on the jenkins-updates branch (this avoids the "detached HEAD" state)
-                                git checkout jenkins-updates
 
-                                # Pull the latest changes from the remote jenkins-updates branch
-                                git pull origin jenkins-updates --no-rebase
-
-                                # Stage and commit the updated deployment.yaml
-                                git add ${DEPLOYMENT_YAML_PATH}
+                                # Commit the changes
                                 git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-
-                                # Push the changes to the remote jenkins-updates branch
-                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
                             )
+
+                            # Ensure we're on the correct branch
+                            git fetch origin jenkins-updates || git checkout -b jenkins-updates origin/jenkins-updates
+                            git checkout jenkins-updates
+
+                            # Pull the latest changes from the remote jenkins-updates branch
+                            git pull origin jenkins-updates --no-rebase
+
+                            # Push the changes to the remote jenkins-updates branch
+                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:jenkins-updates
                         '''
                     }
                 }
