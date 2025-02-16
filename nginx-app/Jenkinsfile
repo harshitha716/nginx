@@ -79,7 +79,9 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh '''
                             # Stage the changes to deployment.yaml
+                            git status
                             git add ${DEPLOYMENT_YAML_PATH}
+                            git status
 
                             # Check if there are any changes to commit
                             git diff --cached --exit-code ${DEPLOYMENT_YAML_PATH} || (
