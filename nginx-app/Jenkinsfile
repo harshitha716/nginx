@@ -67,9 +67,8 @@ pipeline {
                 }
             }
         }
-    }
 
-    stage('Trigger ArgoCD Sync') {
+        stage('Trigger ArgoCD Sync') {
             steps {
                 script {
                     // Trigger ArgoCD sync to deploy the updated application to EKS
