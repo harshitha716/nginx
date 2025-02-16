@@ -69,15 +69,17 @@ pipeline {
         stage('Commit Updated deployment.yaml') {
             steps {
                 script {
-                    sh '''
-                        git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
-                            git config --global user.name "harshitha716"
-                            git config --global user.email "harshithapendiyala0812@gmail.com"
-                            git add ${DEPLOYMENT_YAML_PATH}
-                            git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
-                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:${GIT_BRANCH}
-                        )
-                    '''
+                    withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git diff --exit-code ${DEPLOYMENT_YAML_PATH} || (
+                                git config --global user.name "harshitha716"
+                                git config --global user.email "harshithapendiyala0812@gmail.com"
+                                git add ${DEPLOYMENT_YAML_PATH}
+                                git commit -m "Update deployment.yaml with new image: ${DOCKER_IMAGE} [Jenkins update: Don't trigger webhook]"
+                                git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git HEAD:${GIT_BRANCH}
+                            )
+                        '''
+                    }
                 }
             }
         }
@@ -98,7 +100,7 @@ pipeline {
 
     post {
         always {
-            cleanWs()
+            cleanWs()  // Clean workspace after build
         }
     }
 }
