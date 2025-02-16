@@ -25,11 +25,11 @@ pipeline {
                     def commitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
                     echo "Commit Message: ${commitMessage}"
 
-                    // Exit early if the commit message contains the ignore pattern
+                    // Skip pipeline if commit message contains the Jenkins update message
                     if (commitMessage.contains("[Jenkins update: Don't trigger webhook]")) {
                         echo "Commit message contains the Jenkins update pattern. Skipping pipeline."
-                        currentBuild.result = 'SUCCESS'  // Mark the build as successful without executing further
-                        return  // Exit the pipeline
+                        currentBuild.result = 'SUCCESS'  // Mark build as successful without further execution
+                        return  // Exit the pipeline early
                     }
                 }
             }
@@ -79,7 +79,7 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'github', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
                         sh '''
                             # Stage the changes to deployment.yaml
-                            git checkout jenkins-updates
+                            git checkout ${GIT_BRANCH}
                             git add ${DEPLOYMENT_YAML_PATH}
 
                             # Check if there are any changes to commit
@@ -93,10 +93,10 @@ pipeline {
                             )
 
                             # Pull the latest changes from the remote jenkins-updates branch
-                            git pull origin jenkins-updates --no-rebase
+                            git pull origin ${GIT_BRANCH} --no-rebase
 
                             # Push the changes to the remote jenkins-updates branch
-                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git jenkins-updates
+                            git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/harshitha716/nginx.git ${GIT_BRANCH}
                         '''
                     }
                 }
