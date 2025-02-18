@@ -110,7 +110,7 @@ pipeline {
 
                     // Install argocd CLI if necessary and sync with ArgoCD
                     sh """
-                        argocd login https://localhost:8080 --skip-test-tls --grpc-web \
+                        argocd login localhost:8080 --skip-test-tls --grpc-web \
                         --username admin \
                         --password vUfD8iZwNDGnYzUj
                         argocd app sync ${ARGOCD_APP_NAME}
