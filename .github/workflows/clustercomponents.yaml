@@ -117,7 +117,7 @@ jobs:
     
     outputs:
       AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
-      HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
+      
     
     steps:
       - name: Determine AWS AccountID based on environment
