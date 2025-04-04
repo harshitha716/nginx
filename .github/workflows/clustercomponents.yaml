@@ -198,7 +198,6 @@ jobs:
 
       - name: Connect to Bastion Host
         run: |
-          mkdir -p /home/ec2-user/.ssh/bastion_key.pem
           echo "${{ secrets.PEM_KEY_ENV_VAR_NAME }}" > /home/ec2-user/.ssh/bastion_key.pem
           chmod 600 /home/ec2-user/.ssh/bastion_key.pem
           ssh-keyscan -H 3.139.76.221 >> ~/.ssh/known_hosts
