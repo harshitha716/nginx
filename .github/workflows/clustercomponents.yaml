@@ -203,7 +203,6 @@ jobs:
           aws eks update-kubeconfig --region us-east-2 --name CI-CD
           kubectl get nodes
           kubectl get po -n kube-system
-          EOF
           kubectl get nodes
           if [ "$HELM_RELEASE" == "windmill" ]; then
             helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
