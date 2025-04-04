@@ -196,12 +196,11 @@ jobs:
           secret-ids: |
             PEM_KEY_ENV_VAR_NAME, bastion-key-secret
 
-      - name: Connect to Bastion Host
+      - name: Write PEM Key to a File
         run: |
-          echo "${{ secrets.PEM_KEY_ENV_VAR_NAME }}" > /home/ec2-user/.ssh/bastion_key.pem
-          chmod 600 /home/ec2-user/.ssh/bastion_key.pem
-          ssh-keyscan -H 3.139.76.221 >> ~/.ssh/known_hosts
-          ssh -vvv -tt -i /home/ec2-user/.ssh/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
+          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
+          chmod 600 /tmp/bastion_key.pem
+          ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
 
          
           
