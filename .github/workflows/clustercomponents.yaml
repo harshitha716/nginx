@@ -194,7 +194,7 @@ jobs:
         id: fetch-bastion-key
         run: |
           # Replace 'bastion-key-secret' with the actual secret name in AWS Secrets Manager
-          BASTION_KEY=$(aws secretsmanager get-secret-value --secret-id bastion-key-secret --query SecretString --output text | jq -r .BastionKey)
+          BASTION_KEY=$(aws secretsmanager get-secret-value --secret-id bastion-key-secret --query SecretString --output text)
           echo "BASTION_KEY=$BASTION_KEY" >> $GITHUB_ENV  # Store the Bastion key as an environment variable
 
       - name: Connect to Bastion and deploy
