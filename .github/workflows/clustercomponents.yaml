@@ -194,11 +194,11 @@ jobs:
         uses: aws-actions/aws-secretsmanager-get-secrets@v2
         with:
           secret-ids: |
-            bastion-key-secret
+            PEM_KEY_ENV_VAR_NAME, bastion-key-secret
 
       - name: Write PEM Key to a File
         run: |
-          echo "$bastion-key-secret" > /tmp/bastion_key.pem
+          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
           chmod 600 /tmp/bastion_key.pem
           ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
           sudo su -
