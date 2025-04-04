@@ -179,7 +179,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::842675998483:role/GitHubActionsOIDCRole
           aws-region: ${{ env.AWS_REGION }}
-          role-session-name: GitHubActionsSession
+          role-session-name: MYSession
 
       - name: "Set up kubectl"
         run: |
