@@ -203,6 +203,7 @@ jobs:
           echo "EKS_CLUSTER: $EKS_CLUSTER"
           export AWS_REGION="${AWS_REGION}"
           aws eks update-kubeconfig --region us-east-2 --name CI-CD
+          kubectl get nodes
  
           echo " Deploying Helm release: $HELM_RELEASE"
           helm upgrade --install "$HELM_RELEASE" ~/k8s-aws/"$TEMPLATES_PATH" \
