@@ -1,0 +1,107 @@
+logs:
+  access:
+    enabled: true
+    format: json
+
+    
+
+globalArguments: []
+
+additionalArguments:
+  - "--providers.kubernetescrd.allowCrossNamespace=true"
+  - '--providers.kubernetesingress.ingressclass=traefik'
+ # - '--serversTransport.forwardingTimeouts.idleConnTimeout=0s'
+ # - '--serversTransport.maxIdleConnsPerHost=120'
+  - '--metrics.prometheus'
+  - '--metrics.prometheus.entrypoint=metrics'
+  - '--entryPoints.metrics.address=:8082'
+  - '--metrics.prometheus.buckets=0.01,0.025,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4,0.45,0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9,0.95,1,2,5'
+#  - '--entryPoints.websecure.transport.respondingTimeouts.writeTimeout=300s'
+#  - '--entryPoints.websecure.transport.lifeCycle.requestAcceptGraceTimeout=300s'
+#  - '--entryPoints.websecure.transport.respondingTimeouts.readTimeout=300s'
+
+
+ports:
+  metrics:
+    port: 8082
+
+deployment:
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+
+autoscaling:
+  enabled: true
+{% if env("ENV") == 'prd' %}
+  minReplicas: 5
+{% else %}
+  minReplicas: 2
+{% endif %}
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 60
+{% if env("ENV") == 'prd' %}
+service:
+  spec:
+    externalTrafficPolicy: Local
+    loadBalancerIP: {{ env("TRAEFIK_STATIC_IP") }}
+{% endif %}
+{% if env("ENV") == 'prd-eu' %}
+service:
+  spec:
+    externalTrafficPolicy: Local
+    loadBalancerIP: {{ env("TRAEFIK_STATIC_IP_EU") }}
+{% endif %}
+{% if env("ENV") == 'prd-usa' %}
+service:
+  spec:
+    externalTrafficPolicy: Local
+    loadBalancerIP: {{ env("TRAEFIK_STATIC_IP_USA") }}
+{% endif %}
+# {% if env("ENV") == 'dev' %}
+# service:
+#   spec:
+#     externalTrafficPolicy: Local
+# {% endif %}
+# {% if env("ENV") == 'stg' %}
+# service:
+#   spec:
+#     externalTrafficPolicy: Local
+# {% endif %}
+rollingUpdate:
+  maxUnavailable: 0
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 200Mi
+  limits:
+    cpu: 200m
+    memory: 400Mi
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - traefik
+        topologyKey: kubernetes.io/hostname

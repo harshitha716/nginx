@@ -1,0 +1,55 @@
+{% if env("ENV") != 'stg' %}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    email: devops@zamp.finance
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: issuer-account-key
+    solvers:
+      - http01:
+          ingress:
+            class: traefik
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+ name: letsencrypt-dns
+spec:
+ acme:
+   email: devops@zamp.finance
+   server: https://acme-v02.api.letsencrypt.org/directory
+   privateKeySecretRef:
+     name: cluster-cert-keys
+   solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              key: api-token
+              name: cloudflare-issuer-token
+
+---
+{% endif %}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+{% if env("ENV") != 'stg' %}
+ name: letsencrypt-dns-v1
+{% else %}
+ name: letsencrypt-dns
+{% endif %}
+spec:
+ acme:
+   email: devops@zamp.finance
+   server: https://acme-v02.api.letsencrypt.org/directory
+   privateKeySecretRef:
+     name: cluster-cert-keys
+   solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              key: api-token
+              name: cloudflare-issuer-token
