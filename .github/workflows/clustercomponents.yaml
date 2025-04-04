@@ -202,7 +202,7 @@ jobs:
           echo "AWS_REGION: $AWS_REGION"
           echo "EKS_CLUSTER: $EKS_CLUSTER"
           export AWS_REGION="${AWS_REGION}"
-          eval $(aws sts assume-role --role-arn "arn:aws:iam::913524915637:role/GitHubActionsRole" --role-session-name "MySession" | \
+          eval $(aws sts assume-role --role-arn "arn:aws:iam::842675998483:role/GitHubActionsOIDCRole" --role-session-name "MySession" | \
           jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)"')
           aws eks update-kubeconfig --region us-east-2 --name CI-CD
           kubectl get nodes
