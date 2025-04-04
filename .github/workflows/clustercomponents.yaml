@@ -40,6 +40,7 @@ on:
         options:
           - "zamp-prd-uae-cluster"
           - "zamp-dev-us-cluster"
+          - "CI-CD"
       NAMESPACE:
         description: "Namespace"
         required: true
