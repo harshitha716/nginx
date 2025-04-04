@@ -201,8 +201,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.PEM_KEY_ENV_VAR_NAME }}" > ~/.ssh/bastion_key.pem
           chmod 600 ~/.ssh/bastion_key.pem
-          ssh-keyscan -H ${{ secrets.BASTION_HOST }} >> ~/.ssh/known_hosts
-          ssh -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no user@${{ secrets.BASTION_HOST }}
+          ssh-keyscan -H 3.139.76.221 >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
 
          
           
