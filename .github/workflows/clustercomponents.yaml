@@ -196,7 +196,7 @@ jobs:
           # Replace 'bastion-key-secret' with the actual secret name in AWS Secrets Manager
           BASTION_KEY=$(aws secretsmanager get-secret-value --secret-id bastion-key-secret --query SecretString --output text)
           echo "$BASTION_KEY" 
-          chmod 600 $BASTION_KEY
+         
 
          
 
