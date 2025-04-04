@@ -203,7 +203,7 @@ jobs:
           helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
             --namespace "$NAMESPACE" \
             -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE" \
-            --set-string postgresql.auth.postgresPassword="${POSTGRES_PASSWORD}" 
-     
+            --set-string postgresql.auth.postgresPassword="${POSTGRES_PASSWORD}" \
+            --set-string minio.auth.rootPassword="${POSTGRES_PASSWORD}"
 
     
