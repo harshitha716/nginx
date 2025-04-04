@@ -141,7 +141,8 @@ jobs:
           echo "AWS Account ID: $AWS_ACCOUNT_ID"
           echo "EKS cluster: $EKS_CLUSTER"
           echo "Namespace: $NAMESPACE"
-          echo "Helm release: $HELM_RELEASE"
+          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_ENV"
           echo "Templates path: $TEMPLATES_PATH"
           echo "Values file: $VALUES_FILE"
 
