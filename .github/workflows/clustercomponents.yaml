@@ -199,11 +199,10 @@ jobs:
       - name: Connect to Bastion Host
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.PEM_KEY_ENV_VAR_NAME }}" > ~/.ssh/bastion_key.pem
-          echo >> /home/runner/.ssh/bastion_key.pem
-          chmod 600 ~/.ssh/bastion_key.pem
+          echo "${{ secrets.PEM_KEY_ENV_VAR_NAME }}" > /home/ec2-user/.ssh/bastion_key.pem
+          chmod 600 /home/ec2-user/.ssh/bastion_key.pem
           ssh-keyscan -H 3.139.76.221 >> ~/.ssh/known_hosts
-          ssh -vvv -tt -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
+          ssh -vvv -tt -i /home/ec2-user/.ssh/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
 
          
           
