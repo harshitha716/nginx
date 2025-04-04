@@ -132,6 +132,9 @@ jobs:
             echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Dev AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::842675998483"
           fi
+          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_ENV"
+
 
       - name: Print selected values
         run: |
@@ -145,9 +148,7 @@ jobs:
           echo "Templates path: $TEMPLATES_PATH"
           echo "Values file: $VALUES_FILE"
 
-          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_OUTPUT"
-          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_ENV"
-
+         
   deploy:
     name: Deploy to EKS
     runs-on: ubuntu-latest
