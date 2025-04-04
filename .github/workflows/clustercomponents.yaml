@@ -117,6 +117,7 @@ jobs:
     
     outputs:
       AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
+      HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
     
     steps:
       - name: Determine AWS AccountID based on environment
@@ -132,9 +133,7 @@ jobs:
             echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Dev AWS Account ID
             echo "::set-output name=AWS_ACCOUNT_ID::842675998483"
           fi
-          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_OUTPUT"
-          echo "Helm release: $HELM_RELEASE" >> "$GITHUB_ENV"
-
+          
 
       - name: Print selected values
         run: |
@@ -165,7 +164,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
-      HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
+      HELM_RELEASE: ${{ needs.prepare-env.outputs.HELM_RELEASE }}
       TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
       BASTION_HOST: ${{ secrets.BASTION_HOST }}
