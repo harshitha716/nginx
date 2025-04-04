@@ -24,7 +24,7 @@ minio:
     enabled: true
   auth:
     rootUser: windmill
-    rootPassword: windmill
+    rootPassword: 
 
 windmill:
   # -- windmill app image tag, will use the App version if not defined
@@ -539,5 +539,5 @@ hub-postgresql:
         cpu: "1"
         memory: "1024Mi"
   auth:
-    postgresPassword: windmill
+    postgresPassword:
     database: windmillhub
