@@ -190,23 +190,27 @@ jobs:
         with:
           version: "v3.9.0"
 
-      - name: Fetch PEM Key from AWS Secrets Manager
-        uses: aws-actions/aws-secretsmanager-get-secrets@v2
-        with:
-          secret-ids: |
-            PEM_KEY_ENV_VAR_NAME, bastion-key-secret
-
-      - name: Write PEM Key to a File
+      - name: Fetch password from Secrets Manager
+        id: fetch_secrets
         run: |
-          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
-          chmod 600 /tmp/bastion_key.pem
-          ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
-          set -e
-          sudo su -
-          aws sts get-caller-identity
-          aws eks update-kubeconfig --region us-east-2 --name CI-CD
-          kubectl get nodes
+          SECRET_NAME="DEV_WINDMILL_PASSWORD"
+          PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
+          echo "POSTGRES_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+          echo "ROOT_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+          
+      - name: Upgrade or Install Helm chart with password
+        if: ${{ env.HELM_RELEASE == 'windmill' }}
+        run: |
+          helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
+            --namespace "$NAMESPACE" \
+            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE" \
+            --set-string auth.postgresPassword="${POSTGRES_PASSWORD}" \
+            --set-string auth.rootPassword="${ROOT_PASSWORD}"
 
-
+      - name: Install or Upgrade Helm chart
+        run: |
+          helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
+            --namespace "$NAMESPACE" \
+            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE"
          
           
