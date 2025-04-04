@@ -196,16 +196,8 @@ jobs:
           # Replace 'bastion-key-secret' with the actual secret name in AWS Secrets Manager
           BASTION_KEY=$(aws secretsmanager get-secret-value --secret-id bastion-key-secret --query SecretString --output text)
           echo "$BASTION_KEY" 
-         
-
-         
-
-      - name: Connect to Bastion and deploy
-        run: |
-          cat $BASTION_KEY
-          echo "$BASTION_KEY" 
-          chmod 600 $BASTION_KEY
- 
+          cat "$BASTION_KEY"
+          chmod 600 "$BASTION_KEY"
           echo "$BASTION_KEY" | ssh-agent bash -c "ssh-add -; ssh -o StrictHostKeyChecking=no ec2-user@3.139.76.221
           set -e
           sudo su -
