@@ -167,10 +167,7 @@ jobs:
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
       TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
-      BASTION_HOST: ${{ secrets.BASTION_HOST }}
-      BASTION_USER: ${{ secrets.BASTION_USER }}
-      BASTION_KEY: ${{ secrets.BASTION_KEY }}
-
+      
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v3
@@ -193,12 +190,19 @@ jobs:
         with:
           version: "v3.9.0"
 
+      - name: "Fetch Bastion Key from AWS Secrets Manager"
+        id: fetch-bastion-key
+        run: |
+          # Replace 'bastion-key-secret' with the actual secret name in AWS Secrets Manager
+          BASTION_KEY=$(aws secretsmanager get-secret-value --secret-id bastion-key-secret --query SecretString --output text | jq -r .BastionKey)
+          echo "BASTION_KEY=$BASTION_KEY" >> $GITHUB_ENV  # Store the Bastion key as an environment variable
+
       - name: Connect to Bastion and deploy
         run: |
           echo "$BASTION_KEY" > private_key.pem
           chmod 600 private_key.pem
  
-          ssh -i private_key.pem -o StrictHostKeyChecking=no $BASTION_USER@$BASTION_HOST << 'EOF'
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221 << 'EOF'
           set -e
           sudo su -
           eval $(aws sts assume-role --role-arn "arn:aws:iam::842675998483:role/GitHubActionsOIDCRole" --role-session-name "MySession" | \
