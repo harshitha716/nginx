@@ -207,10 +207,4 @@ jobs:
             --set-string auth.postgresPassword="${POSTGRES_PASSWORD}" \
             --set-string auth.rootPassword="${ROOT_PASSWORD}"
 
-      - name: Install or Upgrade Helm chart
-        run: |
-          helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
-            --namespace "$NAMESPACE" \
-            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE"
-         
-          
+    
