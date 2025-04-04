@@ -206,14 +206,6 @@ jobs:
           aws eks update-kubeconfig --region us-east-2 --name CI-CD
           kubectl get nodes
           echo "Helm release: $HELM_RELEASE"
-          if: ${{ env.HELM_RELEASE == 'windmill' }}
           helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
             --namespace "$NAMESPACE" \
-            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE" \
-            --set-string auth.postgresPassword="${{ secrets.DEV_WINDMILL_PASSWORD }}" \
-            --set-string auth.rootPassword="${{ secrets.DEV_WINDMILL_PASSWORD }}"
-          else
-            helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
-              --namespace "$NAMESPACE" \
-              -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE"
-          fi
+            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE"
