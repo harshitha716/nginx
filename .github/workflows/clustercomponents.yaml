@@ -199,6 +199,8 @@ jobs:
           set -e
  
           echo " Setting up AWS credentials..."
+          echo "AWS_REGION: $AWS_REGION"
+          echo "EKS_CLUSTER: $EKS_CLUSTER"
           export AWS_REGION="${AWS_REGION}"
           aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER"
  
