@@ -202,8 +202,7 @@ jobs:
           jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)"')
           aws eks update-kubeconfig --region us-east-2 --name CI-CD
           kubectl get nodes
-          kubectl get po -n kube-system
-          kubectl get nodes
+          echo "Helm release: $HELM_RELEASE"
           if [ "$HELM_RELEASE" == "windmill" ]; then
             helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
               --namespace "$NAMESPACE" \
