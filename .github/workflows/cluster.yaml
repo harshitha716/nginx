@@ -196,8 +196,6 @@ jobs:
           SECRET_NAME="DEV_WINDMILL_PASSWORD"
           PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
           echo "POSTGRES_PASSWORD=$PASSWORD" >> $GITHUB_ENV
-          echo "ROOT_PASSWORD=$PASSWORD" >> $GITHUB_ENV
-          echo $POSTGRES_PASSWORD
           
       - name: Upgrade or Install Helm chart with password
         if: ${{ env.HELM_RELEASE == 'windmill' }}
@@ -205,9 +203,7 @@ jobs:
           helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
             --namespace "$NAMESPACE" \
             -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE" \
-            --set-string auth.postgresPassword="${POSTGRES_PASSWORD}" \
-            --set-string auth.rootPassword="${POSTGRES_PASSWORD}"
-
+            --set-string postgresql.auth.postgresPassword="${POSTGRES_PASSWORD}" 
      
 
     
