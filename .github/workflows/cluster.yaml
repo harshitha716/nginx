@@ -197,6 +197,7 @@ jobs:
           PASSWORD=$(aws secretsmanager get-secret-value --secret-id $SECRET_NAME --query SecretString --output text)
           echo "POSTGRES_PASSWORD=$PASSWORD" >> $GITHUB_ENV
           echo "ROOT_PASSWORD=$PASSWORD" >> $GITHUB_ENV
+          echo $POSTGRES_PASSWORD
           
       - name: Upgrade or Install Helm chart with password
         if: ${{ env.HELM_RELEASE == 'windmill' }}
