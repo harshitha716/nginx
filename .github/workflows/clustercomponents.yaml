@@ -164,7 +164,7 @@ jobs:
       AWS_ACCOUNT_ID: ${{ needs.prepare-env.outputs.AWS_ACCOUNT_ID }}
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
-      HELM_RELEASE: ${{ needs.prepare-env.outputs.HELM_RELEASE }}
+      HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
       TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
       BASTION_HOST: ${{ secrets.BASTION_HOST }}
