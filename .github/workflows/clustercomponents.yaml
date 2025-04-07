@@ -258,3 +258,4 @@ jobs:
 
           rm -rf /home/ec2-user/"$HELM_RELEASE"
           EOF
+
