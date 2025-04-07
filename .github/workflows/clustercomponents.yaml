@@ -64,23 +64,6 @@ on:
           - "kibana"
           - "karpenter"
           - "loki"
-      #TEMPLATES_PATH:
-      #  description: "Helm chart templates path"
-      #  required: true
-      #  type: choice
-      #  options:
-      #    - "cert-manager/charts/cert-manager"
-      #    - "external-secrets"
-      #    - "windmill"
-      #    - "traefik/charts/traefik"
-      #    - "metrics-server"
-      #    - "prometheus"
-      #    - "grafana"
-      #    - "elasticsearch"
-      #    - "filebeat"
-      #    - "kibana"
-      #    - "karpenter"
-      #    - "loki"
       VALUES_FILE:
         description: "Values File path"
         required: true
@@ -89,11 +72,6 @@ on:
           - "dev-values.yaml"
           - "prduae-values.yaml"
           - "values.yaml"
-          #- "charts/cert-manager/dev-values.yaml --set installCRDs=true"
-          #- "charts/cert-manager/prduae-values.yaml --set installCRDs=true"
-          #- "charts/traefik/dev-values.yaml"
-          #- "charts/traefik/prduae-values.yaml"   
-
 jobs:
   prepare-env:
     name: Prepare Env
