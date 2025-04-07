@@ -7,10 +7,6 @@ on:
         description: "Branch name"
         required: true
         default: "main"
-        #type: choice
-        #options:
-        #  - "main"
-        #  - "uae"
       ENVIRONMENT:
         description: "Deployment Environment (dev/stage/prod)"
         required: true
@@ -72,6 +68,7 @@ on:
           - "dev-values.yaml"
           - "prduae-values.yaml"
           - "values.yaml"
+
 jobs:
   prepare-env:
     name: Prepare Env
@@ -85,7 +82,6 @@ jobs:
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
-      TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
     
     outputs:
@@ -110,7 +106,7 @@ jobs:
               BASTION_IP="54.84.215.139"
               ;;
             prduae)
-              ACCOUNT_ID="916079538338" # Replace with actual account ID
+              ACCOUNT_ID="916079538338"
               BASTION_IP="11.22.33.44"
               ;;
             *)
@@ -132,7 +128,6 @@ jobs:
           echo "EKS cluster: $EKS_CLUSTER"
           echo "Namespace: $NAMESPACE"
           echo "Helm release: $HELM_RELEASE"
-          echo "Templates path: $TEMPLATES_PATH"
           echo "Values file: $VALUES_FILE"
           echo "Bastion ip: $BASTION_IP"
 
@@ -153,7 +148,6 @@ jobs:
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
-      TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
       BASTION_IP: ${{ needs.prepare-env.outputs.BASTION_IP }}
       BASTION_USER: ${{ secrets.BASTION_USER }}
@@ -195,10 +189,9 @@ jobs:
           scp -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no -r ./k8s-aws/"$HELM_RELEASE" ec2-user@$BASTION_IP:/home/ec2-user/
  
       - name: Write PEM Key to a File
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
+        run: |
+          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
+          chmod 600 /tmp/bastion_key.pem
 
       - name: Upgrade or Install Helm chart with password
         if: ${{ env.HELM_RELEASE == 'windmill' }}
@@ -259,7 +252,7 @@ jobs:
               --namespace "$NAMESPACE" \
               --create-namespace \
               -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE"
-              fi
+          fi
           
           sleep 60
 
