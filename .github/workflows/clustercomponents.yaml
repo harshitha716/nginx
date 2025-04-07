@@ -7,14 +7,10 @@ on:
         description: "Branch name"
         required: true
         default: "main"
-        type: choice
-        options:
-          - "main"
-          - "uae"
-          - "aws-eks-cluster-components-pipeline-v1"
-          - "aws-eks-cluster-components-pipeline-v2"
-          - "aws-dev-terraform-v24"
-          - "aws-dev-terraform-v25"
+        #type: choice
+        #options:
+        #  - "main"
+        #  - "uae"
       ENVIRONMENT:
         description: "Deployment Environment (dev/stage/prod)"
         required: true
@@ -32,7 +28,7 @@ on:
         type: choice
         options:
           - "me-central-1"
-          - "us-east-2"
+          - "us-east-1"
       EKS_CLUSTER:
         description: "EKS cluster name"
         required: true
@@ -40,7 +36,6 @@ on:
         options:
           - "zamp-prd-uae-cluster"
           - "zamp-dev-us-cluster"
-          - "CI-CD"
       NAMESPACE:
         description: "Namespace"
         required: true
@@ -53,7 +48,7 @@ on:
           - "monitoring"
           - "logging"
       HELM_RELEASE:
-        description: "Chart to be deployed"
+        description: "Chart to be deployed and templates path"
         required: true
         type: choice
         options:
@@ -69,23 +64,23 @@ on:
           - "kibana"
           - "karpenter"
           - "loki"
-      TEMPLATES_PATH:
-        description: "Helm chart templates path"
-        required: true
-        type: choice
-        options:
-          - "cert-manager/charts/cert-manager"
-          - "external-secrets"
-          - "windmill"
-          - "traefik/charts/traefik"
-          - "metrics-server"
-          - "prometheus"
-          - "grafana"
-          - "elasticsearch"
-          - "filebeat"
-          - "kibana"
-          - "karpenter"
-          - "loki"
+      #TEMPLATES_PATH:
+      #  description: "Helm chart templates path"
+      #  required: true
+      #  type: choice
+      #  options:
+      #    - "cert-manager/charts/cert-manager"
+      #    - "external-secrets"
+      #    - "windmill"
+      #    - "traefik/charts/traefik"
+      #    - "metrics-server"
+      #    - "prometheus"
+      #    - "grafana"
+      #    - "elasticsearch"
+      #    - "filebeat"
+      #    - "kibana"
+      #    - "karpenter"
+      #    - "loki"
       VALUES_FILE:
         description: "Values File path"
         required: true
@@ -94,10 +89,10 @@ on:
           - "dev-values.yaml"
           - "prduae-values.yaml"
           - "values.yaml"
-          - "charts/cert-manager/dev-values.yaml --set installCRDs=true"
-          - "charts/cert-manager/prduae-values.yaml --set installCRDs=true"
-          - "charts/traefik/dev-values.yaml"
-          - "charts/traefik/prduae-values.yaml"   
+          #- "charts/cert-manager/dev-values.yaml --set installCRDs=true"
+          #- "charts/cert-manager/prduae-values.yaml --set installCRDs=true"
+          #- "charts/traefik/dev-values.yaml"
+          #- "charts/traefik/prduae-values.yaml"   
 
 jobs:
   prepare-env:
@@ -117,23 +112,38 @@ jobs:
     
     outputs:
       AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
-      
+      BASTION_IP: ${{ steps.set-account.outputs.BASTION_IP }}
     
     steps:
       - name: Determine AWS AccountID based on environment
         id: set-account
         run: |
-          if [[ "$ENVIRONMENT" == "prod" ]]; then
-            echo "AWS_ACCOUNT_ID=916079538338" >> $GITHUB_ENV  # Replace with actual Prod AWS Account ID
-            echo "::set-output name=AWS_ACCOUNT_ID::916079538338"
-          elif [[ "$ENVIRONMENT" == "stage" ]]; then
-            echo "AWS_ACCOUNT_ID=123456789" >> $GITHUB_ENV  # Replace with actual Stage AWS Account ID
-            echo "::set-output name=AWS_ACCOUNT_ID::123456789"
-          else
-            echo "AWS_ACCOUNT_ID=842675998483" >> $GITHUB_ENV  # Replace with actual Dev AWS Account ID
-            echo "::set-output name=AWS_ACCOUNT_ID::842675998483"
-          fi
-          
+          case "$ENVIRONMENT" in
+            prod)
+              ACCOUNT_ID="1122334455"
+              BASTION_IP="11.22.33.44"
+              ;;
+            stage)
+              ACCOUNT_ID="123456789"
+              BASTION_IP="11.22.33.44"
+              ;;
+            dev)
+              ACCOUNT_ID="913524915637"
+              BASTION_IP="54.84.215.139"
+              ;;
+            prduae)
+              ACCOUNT_ID="916079538338" # Replace with actual account ID
+              BASTION_IP="11.22.33.44"
+              ;;
+            *)
+              echo "Invalid environment"; exit 1
+              ;;
+          esac
+
+          echo "aws_account_id=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
+          echo "bastion_ip=$BASTION_IP" >> "$GITHUB_OUTPUT"
+          echo "AWS_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
+          echo "BASTION_IP=$BASTION_IP" >> "$GITHUB_ENV"
 
       - name: Print selected values
         run: |
@@ -146,8 +156,8 @@ jobs:
           echo "Helm release: $HELM_RELEASE"
           echo "Templates path: $TEMPLATES_PATH"
           echo "Values file: $VALUES_FILE"
+          echo "Bastion ip: $BASTION_IP"
 
-         
   deploy:
     name: Deploy to EKS
     runs-on: ubuntu-latest
@@ -167,7 +177,10 @@ jobs:
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
       TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
-      
+      BASTION_IP: ${{ needs.prepare-env.outputs.BASTION_IP }}
+      BASTION_USER: ${{ secrets.BASTION_USER }}
+      BASTION_KEY: ${{ secrets.BASTION_KEY }}
+
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v3
@@ -177,9 +190,9 @@ jobs:
       - name: "Set up AWS credentials using OIDC"
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::842675998483:role/GitHubActionsOIDCRole
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
           aws-region: ${{ env.AWS_REGION }}
-          role-session-name: MYSession
+          role-session-name: GitHubActionsSession
 
       - name: "Set up kubectl"
         run: |
@@ -195,18 +208,82 @@ jobs:
         with:
           secret-ids: |
             PEM_KEY_ENV_VAR_NAME, bastion-key-secret
+            WINDMILL_PASSWORD, zamp-dev-us-windmill-password
 
-      - name: Write PEM Key to a File
+      - name: Copy Helm chart to bastion
         run: |
           echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
           chmod 600 /tmp/bastion_key.pem
-          ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@3.139.76.221
+          scp -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no -r ./k8s-aws/"$HELM_RELEASE" ec2-user@$BASTION_IP:/home/ec2-user/
+ 
+      - name: Write PEM Key to a File
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ env.AWS_SESSION_TOKEN }}
+
+      - name: Upgrade or Install Helm chart with password
+        if: ${{ env.HELM_RELEASE == 'windmill' }}
+        run: |
+          helm upgrade --install "$HELM_RELEASE" ./k8s-aws/"$TEMPLATES_PATH" \
+            --namespace "$NAMESPACE" \
+            -f ./k8s-aws/"$HELM_RELEASE"/"$VALUES_FILE" \
+            --set-string auth.postgresPassword="${{ secrets.DEV_WINDMILL_PASSWORD }}" \
+            --set-string auth.rootPassword="${{ secrets.DEV_WINDMILL_PASSWORD }}"
+
+      - name: Install or Upgrade Helm chart
+        run: |
+          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
+          chmod 600 /tmp/bastion_key.pem
+          ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@$BASTION_IP << EOF
           set -e
           sudo su -
-          aws sts get-caller-identity
-          aws eks update-kubeconfig --region us-east-2 --name CI-CD
-          kubectl get nodes
 
-
-         
+          export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
+          export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
+          export AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"
+          export AWS_REGION="${AWS_REGION}"
+          export EKS_CLUSTER="${EKS_CLUSTER}"
           
+          aws sts get-caller-identity
+
+          aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER"
+          kubectl get nodes
+          ls /home/ec2-user
+          
+          if [ "$HELM_RELEASE" = "windmill" ]; then
+            echo "Deploying Windmill with DB password from AWS Secrets Manager"
+            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/"$HELM_RELEASE" \
+            --namespace "$NAMESPACE" \
+            --create-namespace \
+            -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE" \
+            --set-string postgresql.auth.postgresPassword="${WINDMILL_PASSWORD}" \
+            --set postgresql.primary.persistence.storageClass="gp3"
+
+          elif [ "$HELM_RELEASE" = "cert-manager" ]; then
+            echo "Deploying Cert-Manager with CRDs"
+            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/cert-manager/charts/"$HELM_RELEASE" \
+              --namespace "$NAMESPACE" \
+              --create-namespace \
+              -f /home/ec2-user/"$HELM_RELEASE"/charts/cert-manager/"$VALUES_FILE" \
+              --set installCRDs=true
+
+          elif [ "$HELM_RELEASE" = "traefik" ]; then
+            echo "Deploying Traefik"
+            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/traefik/charts/"$HELM_RELEASE" \
+              --namespace "$NAMESPACE" \
+              --create-namespace \
+              -f /home/ec2-user/"$HELM_RELEASE"/charts/traefik/"$VALUES_FILE"
+
+          else
+            echo "Deploying $HELM_RELEASE"
+            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/"$HELM_RELEASE" \
+              --namespace "$NAMESPACE" \
+              --create-namespace \
+              -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE"
+              fi
+          
+          sleep 60
+
+          rm -rf /home/ec2-user/"$HELM_RELEASE"
+          EOF
