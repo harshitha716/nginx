@@ -82,8 +82,9 @@ jobs:
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
+      TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
-    
+
     outputs:
       AWS_ACCOUNT_ID: ${{ steps.set-account.outputs.AWS_ACCOUNT_ID }}
       BASTION_IP: ${{ steps.set-account.outputs.BASTION_IP }}
@@ -113,11 +114,11 @@ jobs:
               echo "Invalid environment"; exit 1
               ;;
           esac
-
-          echo "aws_account_id=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
-          echo "bastion_ip=$BASTION_IP" >> "$GITHUB_OUTPUT"
+          
           echo "AWS_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
           echo "BASTION_IP=$BASTION_IP" >> "$GITHUB_ENV"
+          echo "AWS_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_OUTPUT"
+          echo "BASTION_IP=$BASTION_IP" >> "$GITHUB_OUTPUT"
 
       - name: Print selected values
         run: |
@@ -128,6 +129,7 @@ jobs:
           echo "EKS cluster: $EKS_CLUSTER"
           echo "Namespace: $NAMESPACE"
           echo "Helm release: $HELM_RELEASE"
+          echo "Templates path: $TEMPLATES_PATH"
           echo "Values file: $VALUES_FILE"
           echo "Bastion ip: $BASTION_IP"
 
@@ -148,6 +150,7 @@ jobs:
       EKS_CLUSTER: ${{ github.event.inputs.EKS_CLUSTER }}
       NAMESPACE: ${{ github.event.inputs.NAMESPACE }}
       HELM_RELEASE: ${{ github.event.inputs.HELM_RELEASE }}
+      TEMPLATES_PATH: ${{ github.event.inputs.TEMPLATES_PATH }}
       VALUES_FILE: ${{ github.event.inputs.VALUES_FILE }}
       BASTION_IP: ${{ needs.prepare-env.outputs.BASTION_IP }}
       BASTION_USER: ${{ secrets.BASTION_USER }}
@@ -187,11 +190,6 @@ jobs:
           echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
           chmod 600 /tmp/bastion_key.pem
           scp -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no -r ./k8s-aws/"$HELM_RELEASE" ec2-user@$BASTION_IP:/home/ec2-user/
- 
-      - name: Write PEM Key to a File
-        run: |
-          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
-          chmod 600 /tmp/bastion_key.pem
 
       - name: Upgrade or Install Helm chart with password
         if: ${{ env.HELM_RELEASE == 'windmill' }}
@@ -204,12 +202,9 @@ jobs:
 
       - name: Install or Upgrade Helm chart
         run: |
-          echo "$PEM_KEY_ENV_VAR_NAME" > /tmp/bastion_key.pem
-          chmod 600 /tmp/bastion_key.pem
           ssh -i /tmp/bastion_key.pem -o StrictHostKeyChecking=no ec2-user@$BASTION_IP << EOF
           set -e
           sudo su -
-
           export AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}"
           export AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}"
           export AWS_SESSION_TOKEN="${AWS_SESSION_TOKEN}"
@@ -217,45 +212,22 @@ jobs:
           export EKS_CLUSTER="${EKS_CLUSTER}"
           
           aws sts get-caller-identity
-
           aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER"
           kubectl get nodes
-          ls /home/ec2-user
-          
+
           if [ "$HELM_RELEASE" = "windmill" ]; then
-            echo "Deploying Windmill with DB password from AWS Secrets Manager"
             helm upgrade --install "$HELM_RELEASE" /home/ec2-user/"$HELM_RELEASE" \
-            --namespace "$NAMESPACE" \
-            --create-namespace \
-            -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE" \
-            --set-string postgresql.auth.postgresPassword="${WINDMILL_PASSWORD}" \
-            --set postgresql.primary.persistence.storageClass="gp3"
-
-          elif [ "$HELM_RELEASE" = "cert-manager" ]; then
-            echo "Deploying Cert-Manager with CRDs"
-            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/cert-manager/charts/"$HELM_RELEASE" \
               --namespace "$NAMESPACE" \
               --create-namespace \
-              -f /home/ec2-user/"$HELM_RELEASE"/charts/cert-manager/"$VALUES_FILE" \
-              --set installCRDs=true
-
-          elif [ "$HELM_RELEASE" = "traefik" ]; then
-            echo "Deploying Traefik"
-            helm upgrade --install "$HELM_RELEASE" /home/ec2-user/traefik/charts/"$HELM_RELEASE" \
-              --namespace "$NAMESPACE" \
-              --create-namespace \
-              -f /home/ec2-user/"$HELM_RELEASE"/charts/traefik/"$VALUES_FILE"
-
+              -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE" \
+              --set-string postgresql.auth.postgresPassword="${WINDMILL_PASSWORD}" \
+              --set postgresql.primary.persistence.storageClass="gp3"
           else
-            echo "Deploying $HELM_RELEASE"
             helm upgrade --install "$HELM_RELEASE" /home/ec2-user/"$HELM_RELEASE" \
               --namespace "$NAMESPACE" \
               --create-namespace \
               -f /home/ec2-user/"$HELM_RELEASE"/"$VALUES_FILE"
           fi
-          
           sleep 60
-
           rm -rf /home/ec2-user/"$HELM_RELEASE"
           EOF
-
